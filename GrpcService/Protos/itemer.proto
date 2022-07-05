@@ -1,0 +1,20 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GrpcService";
+
+package itemer;
+
+service Itemer {
+  rpc GetItem (ItemRequest) returns (ItemReply);
+}
+
+message ItemRequest {
+  int32 id = 1;
+}
+
+
+message ItemReply {
+  int32 id = 1;
+}
+
+

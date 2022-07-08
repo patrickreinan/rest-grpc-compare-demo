@@ -9,7 +9,7 @@ const int count = 50;
 
 
 const string RESTBaseURL = "http://localhost:6001";
-const string GRPCBaseURL = "http://localhost:6002";
+const string GRPCBaseURL = "dns:///localhost:6002";
 
 var stopWatch = new Stopwatch();
 

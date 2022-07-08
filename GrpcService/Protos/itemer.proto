@@ -6,6 +6,7 @@ package itemer;
 
 service Itemer {
   rpc GetItem (ItemRequest) returns (ItemReply);
+  rpc PostItem (PostItemRequest) returns (PostItemReply);
 }
 
 message ItemRequest {
@@ -14,7 +15,29 @@ message ItemRequest {
 
 
 message ItemReply {
+    int32 id = 1;
+    string message=2;
+    string field1=3;
+    string field2=4;
+    string field3=5;
+    string field4=6;
+    string field5=7;
+
+}
+
+
+message PostItemReply {
   int32 id = 1;
 }
 
 
+message PostItemRequest {
+    int32 id = 1;
+    string message=2;
+    string field1=3;
+    string field2=4;
+    string field3=5;
+    string field4=6;
+    string field5=7;
+
+}

@@ -1,102 +1,112 @@
 ﻿
 
 using System.Diagnostics;
+using System.Text.Json;
 using Grpc.Net.Client;
 using GrpcServiceClient;
 
-const int count = 100_000;
+const int count = 50;
+
+
 const string RESTBaseURL = "http://localhost:6001";
-const string GRPCBaseURL = "dns:///localhost:6002";
+const string GRPCBaseURL = "http://localhost:6002";
 
-Menu();
+var stopWatch = new Stopwatch();
 
-void Menu()
+using var httpClient = new HttpClient()
 {
+    BaseAddress = new Uri(RESTBaseURL)
+};
 
-    Console.Clear();
-    Console.WriteLine("1. REST");
-    Console.WriteLine("2. GRPC");
 
-    Console.WriteLine("Choose a option:");
-    var option = Console.Read();
+using var channel = GrpcChannel.ForAddress(GRPCBaseURL, new GrpcChannelOptions()
+{
+    Credentials = Grpc.Core.ChannelCredentials.Insecure
+});
+var grpcClient = new Itemer.ItemerClient(channel);
 
-    var ch = Convert.ToChar(option);
+Console.Clear();
 
-    switch (ch)
+
+Console.WriteLine($"REST\t\tGRPC\t\tRESULT");
+
+
+for (int current = 0; current < count; current++)
+{
+    /*
+    var uri = $"/api/items/{current}";
+    stopWatch.Start();
+    var restResult = httpClient.GetAsync(uri).Result;
+    stopWatch.Stop();
+    var rest = stopWatch.Elapsed.TotalMilliseconds;
+
+    stopWatch.Reset();
+
+    var request = new ItemRequest() { Id = current };
+    stopWatch.Start();
+    var grpcResult = grpcClient.GetItem(request);
+    stopWatch.Stop();
+    var grpc = stopWatch.Elapsed.TotalMilliseconds;
+
+    var compare =
+        rest == grpc ? "EQUAL" :
+        rest < grpc ? "REST" : "GRPC";
+    Console.WriteLine($"{rest}\t\t{grpc}\t\t{compare}");
+
+    stopWatch.Reset();
+    */
+
+
+    var uri = $"/api/items/";
+    var item = new
     {
-        case '1':
-            REST();
-            break;
-        case '2':
-            GRPC();
-            break;
-        default:
-            Menu();
-            break;
-    }
-
-}
-
-
-void Run(Action action)
-{
-    var stopWatch = new Stopwatch();
+        Id = current,
+        Message = "Posting message",
+        Field1 = "field1",
+        Field2 = "field2",
+        Field3 = "field3",
+        Field4 = "field4",
+        Field5 = "field5"
+    };
+    var json = JsonSerializer.Serialize(item);
 
     stopWatch.Start();
+    var restResult = httpClient.PostAsync(uri, new StringContent(json)).Result;
+    stopWatch.Stop();
+    var rest = stopWatch.Elapsed.TotalMilliseconds;
+    stopWatch.Reset();
 
-    action();
 
+
+    var request = new PostItemRequest()
+    {
+        Id = current,
+        Message = "Posting message",
+        Field1 = "field1",
+        Field2 = "field2",
+        Field3 = "field3",
+        Field4 = "field4",
+        Field5 = "field5"
+    };
+
+    stopWatch.Start();
+    var grpcResult = grpcClient.PostItem(request);
     stopWatch.Stop();
 
-    Console.WriteLine($"{stopWatch.Elapsed.Seconds} sec");
+    var grpc = stopWatch.Elapsed.TotalMilliseconds;
+
+    var compare =
+        rest == grpc ? "EQUAL" :
+        rest < grpc ? "REST" : "GRPC";
+    Console.WriteLine($"{rest}\t\t{grpc}\t\t{compare}");
+
+    stopWatch.Reset();
 
 }
 
 
-void REST()
-{
-
-    Run(() =>
-    {
-
-        using var httpClient = new HttpClient()
-        {
-            BaseAddress = new Uri(RESTBaseURL)
-        };
-
-        for (int current = 0; current < count; current++)
-        {
-            httpClient.GetAsync($"/api/items/{current}").Wait();
-        }
-
-    });
-
-}
-
-
-void GRPC()
-{
-
-
-    Run(() =>
-    {
 
 
 
-        using var channel = GrpcChannel.ForAddress(GRPCBaseURL, new GrpcChannelOptions()
-        {
-            Credentials = Grpc.Core.ChannelCredentials.Insecure
-        });
-
-         var client = new Itemer.ItemerClient(channel);
 
 
-        for (int current = 0; current < count; current++)
-        {
-            var result = client.GetItem(new ItemRequest() { Id = current });
-        }
-
-    }
-    );
-
-}

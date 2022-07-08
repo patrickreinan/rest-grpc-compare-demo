@@ -20,4 +20,9 @@
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
   </ItemGroup>
+
+  <PropertyGroup>
+  <ServerGarbageCollection>true</ServerGarbageCollection>
+</PropertyGroup>
+
 </Project>

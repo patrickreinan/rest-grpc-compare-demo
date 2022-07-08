@@ -2,10 +2,12 @@
 
 using System.Diagnostics;
 using System.Text.Json;
+using ConsoleClient;
 using Grpc.Net.Client;
 using GrpcServiceClient;
 
-const int count = 50;
+const int count = 10;
+const int columnSize = 15;
 
 
 const string RESTBaseURL = "http://localhost:6001";
@@ -23,62 +25,22 @@ using var channel = GrpcChannel.ForAddress(GRPCBaseURL, new GrpcChannelOptions()
 {
     Credentials = Grpc.Core.ChannelCredentials.Insecure
 });
+
 var grpcClient = new Itemer.ItemerClient(channel);
 
 Console.Clear();
 
-
-Console.WriteLine($"REST\t\tGRPC\t\tRESULT");
-
+bool headerRendered = false;
 
 for (int current = 0; current < count; current++)
 {
-    /*
-    var uri = $"/api/items/{current}";
-    stopWatch.Start();
-    var restResult = httpClient.GetAsync(uri).Result;
-    stopWatch.Stop();
-    var rest = stopWatch.Elapsed.TotalMilliseconds;
-
-    stopWatch.Reset();
-
-    var request = new ItemRequest() { Id = current };
-    stopWatch.Start();
-    var grpcResult = grpcClient.GetItem(request);
-    stopWatch.Stop();
-    var grpc = stopWatch.Elapsed.TotalMilliseconds;
-
-    var compare =
-        rest == grpc ? "EQUAL" :
-        rest < grpc ? "REST" : "GRPC";
-    Console.WriteLine($"{rest}\t\t{grpc}\t\t{compare}");
-
-    stopWatch.Reset();
-    */
 
 
-    var uri = $"/api/items/";
-    var item = new
-    {
-        Id = current,
-        Message = "Posting message",
-        Field1 = "field1",
-        Field2 = "field2",
-        Field3 = "field3",
-        Field4 = "field4",
-        Field5 = "field5"
-    };
-    var json = JsonSerializer.Serialize(item);
+    var executionPlan = new ExecutionPlan();
 
-    stopWatch.Start();
-    var restResult = httpClient.PostAsync(uri, new StringContent(json)).Result;
-    stopWatch.Stop();
-    var rest = stopWatch.Elapsed.TotalMilliseconds;
-    stopWatch.Reset();
-
-
-
-    var request = new PostItemRequest()
+    var restGetUri = $"/api/items/{current}";
+    var restPostUri = $"/api/items/";
+    var restPostBodyObject = new
     {
         Id = current,
         Message = "Posting message",
@@ -89,20 +51,61 @@ for (int current = 0; current < count; current++)
         Field5 = "field5"
     };
 
-    stopWatch.Start();
-    var grpcResult = grpcClient.PostItem(request);
-    stopWatch.Stop();
+    var grpcPostItem = new PostItemRequest()
+    {
+        Id = current,
+        Message = "Posting message",
+        Field1 = "field1",
+        Field2 = "field2",
+        Field3 = "field3",
+        Field4 = "field4",
+        Field5 = "field5"
+    };
 
-    var grpc = stopWatch.Elapsed.TotalMilliseconds;
+    var restPostBody = JsonSerializer.Serialize(restPostBodyObject);
 
-    var compare =
-        rest == grpc ? "EQUAL" :
-        rest < grpc ? "REST" : "GRPC";
-    Console.WriteLine($"{rest}\t\t{grpc}\t\t{compare}");
+    var grpcGetRequest = new ItemRequest() { Id = current };
 
-    stopWatch.Reset();
+
+    executionPlan
+        .AddStep("REST-GetItem", () =>
+        {
+            _ = httpClient.GetAsync(restGetUri).Result;
+        })
+       
+        .AddStep("GRPC-GetItem", () =>
+        {
+            _ = grpcClient.GetItem(grpcGetRequest);
+        })
+         .AddStep("REST-PostItem", () =>
+         {
+             _ = httpClient.PostAsync(restPostUri, new StringContent(restPostBody)).Result;
+         })
+        .AddStep("GRPC-PostItem", () =>
+        {
+            _ = grpcClient.PostItem(grpcPostItem);
+        })
+        .Execute();
+
+
+    foreach (var item in executionPlan.Results)
+    {
+        if (!headerRendered)
+        {
+            foreach (var key in executionPlan.Results.Keys)
+                Console.Write($"{key}\t".PadLeft(columnSize));  
+
+            Console.WriteLine();
+        }
+        headerRendered = true;
+
+        Console.Write($"{item.Value}\t".PadLeft(columnSize));
+    }
+
+    Console.WriteLine();
 
 }
+
 
 
 

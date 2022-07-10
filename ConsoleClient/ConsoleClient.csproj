@@ -14,6 +14,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Google.Protobuf" Version="3.20.1" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
   </ItemGroup>
 
     <ItemGroup>
@@ -22,5 +23,10 @@
   </ItemGroup>
     <ItemGroup>
       <None Remove="Google.Protobuf" />
+      <None Remove="Clients\" />
+      <None Remove="Microsoft.AspNet.WebApi.Client" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Clients\" />
     </ItemGroup>
 </Project>

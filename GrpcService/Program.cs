@@ -8,7 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
-builder.Services.AddSingleton<Service>();
+builder.Services
+    .AddSingleton<Service>()
+    .AddSingleton<Repository>();
+
 
 var app = builder.Build();
 

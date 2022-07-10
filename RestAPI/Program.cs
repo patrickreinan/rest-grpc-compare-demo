@@ -7,55 +7,37 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 
-builder.Services.AddSingleton<Service>();
+builder.Services
+    .AddSingleton<Service>()
+    .AddSingleton<Repository>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-app.MapGet("/api/items/{id}", (int id, Service service) =>
+app.MapGet("/api/items/{id}", (string id, Service service) =>
 {
     return Task.Run(() =>
     {
-        var item = service.GetItem(id);
 
-        //dto criada para ter um objeto intermediário assim como acontece no grpc
-        return new GetItemRequest
-        (
-            item.Id,
-            item.Message,
-            item.Field1,
-            item.Field2,
-            item.Field3,
-            item.Field4,
-            item.Field5
-        );
+        var item = service.GetById(id);
+        return new GetItemResponse(item.Message);
+
     });
 
 });
 
-app.MapPost("/api/items", (PostItemRequest item, Service service) =>
+app.MapPost("/api/items", (PostItemRequest request, Service service) =>
 {
 
-    return Task.Run(() => {
+    return Task.Run(() =>
+    {
 
-    //dto criada para ter um objeto intermediário assim como acontece no grpc
-        var id = service.PostItem(
-                new Item(
-                    item.Id,
-                    item.Message,
-                    item.Field1,
-                    item.Field2,
-                    item.Field3,
-                    item.Field4,
-                    item.Field5)
-                );
-
-
+        var id = service.PostItem(request.Message);
         return new PostItemResponse(id);
 
     });
-   
+
 
 });
 

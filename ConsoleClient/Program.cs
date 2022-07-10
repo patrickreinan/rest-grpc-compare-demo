@@ -1,106 +1,45 @@
 ﻿
 
 using System.Diagnostics;
-using System.Text.Json;
-using ConsoleClient;
-using Grpc.Net.Client;
-using GrpcServiceClient;
+using ConsoleClient.Clients;
 
-const int count = 10;
+const int count = 1000;
 const int columnSize = 15;
 
 
-const string RESTBaseURL = "http://localhost:6001";
-const string GRPCBaseURL = "dns:///localhost:6002";
+var clients = new IClient[]
+{
+    new GrpcClient("http://localhost:6002"),
+    new RestClient("http://localhost:6001")
+};
 
 var stopWatch = new Stopwatch();
 
-using var httpClient = new HttpClient()
-{
-    BaseAddress = new Uri(RESTBaseURL)
-};
-
-
-using var channel = GrpcChannel.ForAddress(GRPCBaseURL, new GrpcChannelOptions()
-{
-    Credentials = Grpc.Core.ChannelCredentials.Insecure
-});
-
-var grpcClient = new Itemer.ItemerClient(channel);
-
 Console.Clear();
 
-bool headerRendered = false;
 
-for (int current = 0; current < count; current++)
+foreach (var client in clients)
 {
 
+    Console.Write(client.Name.PadRight(columnSize));
 
-    var executionPlan = new ExecutionPlan();
 
-    var restGetUri = $"/api/items/{current}";
-    var restPostUri = $"/api/items/";
-    var restPostBodyObject = new
+    stopWatch.Start();
+
+    for (int current = 0; current < count; current++)
     {
-        Id = current,
-        Message = "Posting message",
-        Field1 = "field1",
-        Field2 = "field2",
-        Field3 = "field3",
-        Field4 = "field4",
-        Field5 = "field5"
-    };
 
-    var grpcPostItem = new PostItemRequest()
-    {
-        Id = current,
-        Message = "Posting message",
-        Field1 = "field1",
-        Field2 = "field2",
-        Field3 = "field3",
-        Field4 = "field4",
-        Field5 = "field5"
-    };
+        var id =await client.Post($"Message #{current}");
 
-    var restPostBody = JsonSerializer.Serialize(restPostBodyObject);
+        _ = await client.GetItem(id);
 
-    var grpcGetRequest = new ItemRequest() { Id = current };
-
-
-    executionPlan
-        .AddStep("REST-GetItem", () =>
-        {
-            _ = httpClient.GetAsync(restGetUri).Result;
-        })
-       
-        .AddStep("GRPC-GetItem", () =>
-        {
-            _ = grpcClient.GetItem(grpcGetRequest);
-        })
-         .AddStep("REST-PostItem", () =>
-         {
-             _ = httpClient.PostAsync(restPostUri, new StringContent(restPostBody)).Result;
-         })
-        .AddStep("GRPC-PostItem", () =>
-        {
-            _ = grpcClient.PostItem(grpcPostItem);
-        })
-        .Execute();
-
-
-    foreach (var item in executionPlan.Results)
-    {
-        if (!headerRendered)
-        {
-            foreach (var key in executionPlan.Results.Keys)
-                Console.Write($"{key}\t".PadLeft(columnSize));  
-
-            Console.WriteLine();
-        }
-        headerRendered = true;
-
-        Console.Write($"{item.Value}\t".PadLeft(columnSize));
     }
+    stopWatch.Stop();
+
+
+    Console.Write($"\t{stopWatch.Elapsed.TotalMilliseconds}".PadRight(columnSize));
+
+    stopWatch.Reset();
 
     Console.WriteLine();
 

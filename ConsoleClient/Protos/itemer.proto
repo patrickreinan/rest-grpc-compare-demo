@@ -9,38 +9,27 @@ service Itemer {
   rpc PostItem (PostItemRequest) returns (PostItemReply);
 }
 
+
 message ItemRequest {
-  int32 id = 1;
+  string id = 1;
 }
 
 
 message ItemReply {
-    int32 id = 1;
+    
     string message=2;
-    string field1=3;
-    string field2=4;
-    string field3=5;
-    string field4=6;
-    string field5=7;
-
+    
 }
 
 
 message PostItemReply {
-  int32 id = 1;
+  string id = 1;
 }
 
 
 message PostItemRequest {
-    int32 id = 1;
-    string message=2;
-    string field1=3;
-    string field2=4;
-    string field3=5;
-    string field4=6;
-    string field5=7;
+    
+    string message=1;
+    
 
 }
-
-
-

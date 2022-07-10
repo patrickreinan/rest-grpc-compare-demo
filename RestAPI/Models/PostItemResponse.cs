@@ -3,12 +3,12 @@ namespace RestAPI.dto
 {
 	public class PostItemResponse
 	{
-		public PostItemResponse(int id)
+		public PostItemResponse(string id)
 		{
             Id = id;
         }
 
-        public int Id { get; }
+        public string Id { get; }
     }
 }
 

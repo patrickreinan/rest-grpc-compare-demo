@@ -7,13 +7,22 @@ namespace Domain
 {
     public class Service
     {
-        public Item GetItem(int id)
+        private readonly Repository repository;
+
+        public Service(Repository repository)
         {
-            return new Item(id, "Message from item", "Field1", "Field2", "Field3", "Field4", "Field5");
+            this.repository = repository;
         }
 
-        public int PostItem(Item item)
+        public Item GetById(string id)
         {
+            return repository.Get(id);           
+        }
+
+        public string PostItem(string message)
+        {
+            var item = new Item(message);
+            repository.Insert(item);
             return item.Id;
         }
     }
